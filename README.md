@@ -1,4 +1,4 @@
-# CISC/CMPE 204 Modelling Project : BATTLESHIP
+# CISC/CMPE 204 Modelling Project : BATTLESHIP124
 
 Welcome to the major project for CISC/CMPE 204!
 

@@ -1,43 +1,19 @@
 
-from nnf import Var, true
-from lib204 import Encoding
+from bauhaus import Encoding, proposition, constraint
+from bauhaus.utils import count_solutions, likelihood
 
-BOARD_SIZE = 8
-
-# Battleship board variables
-Ship_Segment = []
-Hit = []
-Destroyer_Count = 2  # Number of destroyers to place, each with length 2
-
-# Initialize board variables
-for i in range(BOARD_SIZE):
-    Ship_Segment.append([])
-    Hit.append([])
-    for j in range(BOARD_SIZE):
-        Ship_Segment[i].append(Var(f'Ship_Segment_{i},{j}'))
-        Hit[i].append(Var(f'Hit_{i},{j}'))
-
-
-
-# Board Boundary Constraint: All ship segments must be within the bounds of the game board
-def board_boundary_constraints():
-    constraints = []
-    for i in range(BOARD_SIZE):
-        for j in range(BOARD_SIZE):
-            constraints.append(Ship_Segment[i][j] | ~Ship_Segment[i][j])
-    return constraints
-
-
-
-
-
-
-# These two lines make sure a faster SAT solver is used.
 from nnf import config
 config.sat_backend = "kissat"
 
-# Encoding that will store all of your constraints
+from setup import boardSetup
+
 E = Encoding()
+
+
+
+
+ORIENTATIONS = list('NESW')
+BOARD = ['11', '12', '13', '21', '22', '23', '31', '32', '33']
 
 # To create propositions, create classes for them first, annotated with "@proposition" and the Encoding
 @proposition(E)
@@ -85,10 +61,11 @@ z = FancyPropositions("z")
 def example_theory():
     # Add custom constraints by creating formulas with the variables you created. 
     E.add_constraint((a | b) & ~x)
+    E.add_constraint(a)
     # Implication
-    E.add_constraint(y >> z)
+    #E.add_constraint(y >> z)
     # Negate a formula
-    E.add_constraint(~(x & y))
+    #E.add_constraint(~(x & y))
     # You can also add more customized "fancy" constraints. Use case: you don't want to enforce "exactly one"
     # for every instance of BasicPropositions, but you want to enforce it for a, b, and c.:
     constraint.add_exactly_one(E, a, b, c)
