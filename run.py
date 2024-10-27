@@ -30,7 +30,7 @@ class BasicPropositions:
 # for propositions within that class. For example, you can enforce that "at least one" of the propositions
 # that are instances of this class must be true by using a @constraint decorator.
 # other options include: at most one, exactly one, at most k, and implies all.
-# For a complete module reference, see https://bauhaus.readthedocs.io/en/latest/bauhaus.html
+# For a complete module reference, see 
 @constraint.at_least_one(E)
 @proposition(E)
 class FancyPropositions:
