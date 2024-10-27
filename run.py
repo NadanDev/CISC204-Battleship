@@ -32,10 +32,6 @@ def board_boundary_constraints():
 
 
 
-
-
-
-
 # These two lines make sure a faster SAT solver is used.
 from nnf import config
 config.sat_backend = "kissat"
