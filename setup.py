@@ -1,10 +1,9 @@
-# 0 - Water
-# 1 - Ship
-# 2 - Hit water
-# 3 - Hit ship
+# 0 - Not Checked
+# 1 - Miss
+# 2 - Hit
 
 boardSetup = [
-    2, 3, 2,
-    0, 1, 0,
-    0, 0, 0
+    [0, 0, 0],
+    [1, 2, 1],
+    [0, 1, 0]
 ]
