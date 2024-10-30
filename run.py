@@ -6,7 +6,7 @@ config.sat_backend = "kissat"
 
 E = Encoding()
 
-STYPES = ['des', 'sub']
+STYPES = {'des': 3, 'sub': 2}
 
 # 0 - Not Checked
 # 1 - Miss
@@ -33,8 +33,6 @@ LOCATIONS2D = [
     ['B03', 'L31', 'L32', 'L33', 'B03'],
     ['B04', 'B14', 'B24', 'B34', 'B44']
 ]
-
-
 
 @proposition(E)
 class Hit(object):
@@ -72,6 +70,7 @@ def theory():
     for i in range(len(boardSetup)):
         for j in range(len(boardSetup[i])):
             if (boardSetup[i][j] == 2):
+                E.add_constraint(Hit(LOCATIONS2D[i+1][j+1]))
                 possibleShip=[Hit(LOCATIONS2D[i+2][j+1]), Hit(LOCATIONS2D[i+1][j+2]), Hit(LOCATIONS2D[i][j+1]), Hit(LOCATIONS2D[i+1][j])]
                 constraint.add_exactly_one(E, possibleShip)
 
@@ -89,15 +88,83 @@ def theory():
                 E.add_constraint(Boundary(LOCATIONS2D[i][j]))
                 E.add_constraint(~(Boundary(LOCATIONS2D[i][j]) & Hit(LOCATIONS2D[i][j])))
 
-
-
-    # ************SHIPS************ (WIP)
-    # for i in range(len(LOCATIONS2D)):
-    #     for j in range(len(LOCATIONS2D[i])):
-    #         E.add_constraint(~(Boundary(LOCATIONS2D[i][j]) & Ship(LOCATIONS2D[i][j], 'des')))
-    #         E.add_constraint(Hit(LOCATIONS2D[i][j]) >> Ship(LOCATIONS2D[i][j], 'des'))
+    
+    # Will only print the ship if it's shown in boardSetup with a row of 2's, but this currently breaks the first hit constraint.
+    findShipType()
 
     return E
+
+
+def findShipType():
+    checked=[]
+    for i in range(1, len(LOCATIONS2D) - 1):
+        for j in range(1, len(LOCATIONS2D[i]) - 1):
+            location = LOCATIONS2D[i][j]
+            
+            if (boardSetup[i - 1][j - 1] == 2 and location not in checked):
+                horizontalHits = [location]
+                verticalHits = [location]
+
+                cont = True
+                incr=1
+
+                # Horizontal
+                while cont:
+                    cont = False
+                    if (j + 1 < len(LOCATIONS2D[i]) - 1 and boardSetup[i - 1][j - 1 + incr] == 2):
+                        horizontalHits.append(LOCATIONS2D[i][j + incr])
+                        cont = True
+                        if (incr + 1 < 3):
+                            incr += 1
+                        else:
+                            break
+                while cont:
+                    cont = False
+                    if (j - 1 > 0 and boardSetup[i - 1][j - 1 - incr] == 2):
+                        horizontalHits.append(LOCATIONS2D[i][j - incr])
+                        cont = True
+                        if (incr + 1 < 3):
+                            incr += 1
+                        else:
+                            break
+                    
+                # Vertical
+                while cont:
+                    cont = False
+                    if (i + 1 < len(LOCATIONS2D) - 1 and boardSetup[i - 1 + incr][j - 1] == 2):
+                        verticalHits.append(LOCATIONS2D[i + incr][j])
+                        cont = True
+                        if (incr + 1 < 3):
+                            incr += 1
+                        else:
+                            break
+                while cont:
+                    cont = False
+                    if (i - 1 > 0 and boardSetup[i - 1 - incr][j - 1] == 2):
+                        verticalHits.append(LOCATIONS2D[i - incr][j])
+                        cont = True
+                        if (incr + 1 < 3):
+                            incr += 1
+                        else:
+                            break
+                
+                # Assign ship name depending on hits in a row
+                if (len(horizontalHits) == STYPES['des']):
+                    for loc in horizontalHits:
+                        E.add_constraint(Ship(loc, 'des'))
+                elif (len(verticalHits) == STYPES['des']):
+                    for loc in verticalHits:
+                        E.add_constraint(Ship(loc, 'des'))
+                elif (len(horizontalHits) == STYPES['sub']):
+                    for loc in horizontalHits:
+                        E.add_constraint(Ship(location, 'sub'))
+                elif (len(verticalHits) == STYPES['sub']):
+                    for loc in verticalHits:
+                        E.add_constraint(Ship(location, 'sub'))
+
+                checked = checked + horizontalHits + verticalHits
+
+
 
 
 if __name__ == "__main__":
