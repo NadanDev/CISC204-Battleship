@@ -1,43 +1,7 @@
-from shapes import process
-
-configs = []
-# Configuration examples for boards
-configs.append("""
-rrbbg
-rbbgg
-rppgg
-ppyoo
-pyyyo
-""")
-
-configs.append("""
-g__g_
-g_gg_
-_g___
-__gg_
-g__g_
-""")
-
-configs.append("""
-_____
-_____
-_____
-_____
-_____
-""")
-
-configs.append("""
-____b
-opp_b
-_p__r
-_g_yr
-ggy__
-""")
-
-
-
-BOARDS = {i + 1: process(configs[i]) for i in range(len(configs))}
-
+# 0 - Not Checked
+# 1 - Miss
+# 2 - Hit
+# Does not include boundaries
 # Board setup for the battleship game
 boardSetup = [
     [1, 0, 0],
