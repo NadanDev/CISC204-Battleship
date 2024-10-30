@@ -43,3 +43,83 @@ def dedcution_constraint():
             constraints.append(Hit[i][j] & ~Hit [i+1][j] & ~Hit [i][j+1] & ~Hit [i-1][j] >> Hit[i][j-1])
     return constraints
 
+def findShipType():
+    checked = []
+    for i in range(1, len(LOCATIONS2D) - 1):
+        for j in range(1, len(LOCATIONS2D[i]) - 1):
+            location = LOCATIONS2D[i][j]
+
+            if boardSetup[i - 1][j - 1] == 2 and location not in checked:
+                horizontalHits = [location]
+                verticalHits = [location]
+
+                # Check horizontal hits
+                incr = 1
+                while j + incr < len(LOCATIONS2D[i]) - 1 and boardSetup[i - 1][j - 1 + incr] == 2:
+                    horizontalHits.append(LOCATIONS2D[i][j + incr])
+                    incr += 1
+
+                incr = 1
+                while j - incr > 0 and boardSetup[i - 1][j - 1 - incr] == 2:
+                    horizontalHits.append(LOCATIONS2D[i][j - incr])
+                    incr += 1
+
+                # Check vertical hits
+                incr = 1
+                while i + incr < len(LOCATIONS2D) - 1 and boardSetup[i - 1 + incr][j - 1] == 2:
+                    verticalHits.append(LOCATIONS2D[i + incr][j])
+                    incr += 1
+
+                incr = 1
+                while i - incr > 0 and boardSetup[i - 1 - incr][j - 1] == 2:
+                    verticalHits.append(LOCATIONS2D[i - incr][j])
+                    incr += 1
+
+                # Assign ship type depending on the number of hits in a row
+                if len(horizontalHits) == STYPES['des']:
+                    for loc in horizontalHits:
+                        E.add_constraint(Ship(loc, 'des'))
+                elif len(verticalHits) == STYPES['des']:
+                    for loc in verticalHits:
+                        E.add_constraint(Ship(loc, 'des'))
+                elif len(horizontalHits) == STYPES['sub']:
+                    for loc in horizontalHits:
+                        E.add_constraint(Ship(loc, 'sub'))
+                elif len(verticalHits) == STYPES['sub']:
+                    for loc in verticalHits:
+                        E.add_constraint(Ship(loc, 'sub'))
+
+                # Mark these locations as checked
+                checked = checked + horizontalHits + verticalHits
+
+
+def theory():
+    # ************HITS************
+    for i in range(len(boardSetup)):
+        for j in range(len(boardSetup[i])):
+            if boardSetup[i][j] == 2:
+                E.add_constraint(Hit(LOCATIONS2D[i + 1][j + 1]))
+                possibleShip = [
+                    Hit(LOCATIONS2D[i + 2][j + 1]),
+                    Hit(LOCATIONS2D[i + 1][j + 2]),
+                    Hit(LOCATIONS2D[i][j + 1]),
+                    Hit(LOCATIONS2D[i + 1][j])
+                ]
+                constraint.add_exactly_one(E, possibleShip)
+
+    for i in range(len(boardSetup)):  # No hit and miss in the same spot
+        for j in range(len(boardSetup[i])):
+            if boardSetup[i][j] == 1:
+                E.add_constraint(~Hit(LOCATIONS2D[i + 1][j + 1]))
+
+    # ************BOUNDARY************
+    for i in range(len(LOCATIONS2D)):
+        for j in range(len(LOCATIONS2D[i])):
+            if LOCATIONS2D[i][j][0] == 'B':
+                E.add_constraint(Boundary(LOCATIONS2D[i][j]))
+                E.add_constraint(~(Boundary(LOCATIONS2D[i][j]) & Hit(LOCATIONS2D[i][j])))
+
+    # Find and assign ship types based on hits
+    findShipType()
+
+    return E
