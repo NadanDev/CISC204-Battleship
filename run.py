@@ -13,7 +13,7 @@ STYPES = {'des': 3, 'sub': 2}
 # 2 - Hit
 # Does not include boundaries
 boardSetup = [
-    [1, 0, 0],
+    [1, 0, 2],
     [2, 0, 0],
     [1, 0, 0]
 ]
@@ -41,7 +41,7 @@ class Hit(object):
         self.location = location
 
     def _prop_name(self):
-        return f"Hit({self.location})"
+        return f"Hit @ ({self.location})"
 
 @proposition(E)
 class Boundary(object):
@@ -58,26 +58,36 @@ class Ship(object):
         assert location in LOCATIONS
         assert stype in STYPES
         self.location = location
-        self.stype = stype;
+        self.stype = stype
 
     def _prop_name(self):
-        return f"Ship({self.location}={self.stype})"
+        return f"Ship @ ({self.location}={self.stype})"
+
+@proposition(E)
+class PossibleSegment(object):
+    def __init__(self, location) -> None:
+        assert location in LOCATIONS
+        self.location = location
+
+    def _prop_name(self):
+        return f"Possible segment @ ({self.location})"
         
 
 def theory():
 
     # ************HITS************
+    possibleShip=[]
     for i in range(len(boardSetup)):
         for j in range(len(boardSetup[i])):
             if (boardSetup[i][j] == 2):
                 E.add_constraint(Hit(LOCATIONS2D[i+1][j+1]))
-                possibleShip=[Hit(LOCATIONS2D[i+2][j+1]), Hit(LOCATIONS2D[i+1][j+2]), Hit(LOCATIONS2D[i][j+1]), Hit(LOCATIONS2D[i+1][j])]
-                constraint.add_exactly_one(E, possibleShip)
+                possibleShip = possibleShip + [PossibleSegment(LOCATIONS2D[i+2][j+1]), PossibleSegment(LOCATIONS2D[i+1][j+2]), PossibleSegment(LOCATIONS2D[i][j+1]), PossibleSegment(LOCATIONS2D[i+1][j])]
+    constraint.add_at_least_one(E, possibleShip)
 
     for i in range(len(boardSetup)): # No hit and miss in same spot
         for j in range(len(boardSetup[i])):
             if (boardSetup[i][j] == 1):
-                E.add_constraint(~Hit(LOCATIONS2D[i+1][j+1]))
+                E.add_constraint(~PossibleSegment(LOCATIONS2D[i+1][j+1]))
                 
 
 
@@ -86,11 +96,15 @@ def theory():
         for j in range(len(LOCATIONS2D[i])):
             if (LOCATIONS2D[i][j][0] == 'B'):
                 E.add_constraint(Boundary(LOCATIONS2D[i][j]))
-                E.add_constraint(~(Boundary(LOCATIONS2D[i][j]) & Hit(LOCATIONS2D[i][j])))
+                E.add_constraint(~(Boundary(LOCATIONS2D[i][j]) & PossibleSegment(LOCATIONS2D[i][j])))
 
     
     # Will only print the ship if it's shown in boardSetup with a row of 2's, but this currently breaks the first hit constraint.
     findShipType()
+
+    # TODO: If # solutions is 1 then hit that spot. If # solutions > 1 then randomly choose one of them.
+    # TODO: Decide whether one solution is more plausible than the other (2 horizontally and not sunk -> 1 more horizontally)
+    # TODO: Sunk
 
     return E
 
@@ -157,12 +171,12 @@ def findShipType():
                         E.add_constraint(Ship(loc, 'des'))
                 elif (len(horizontalHits) == STYPES['sub']):
                     for loc in horizontalHits:
-                        E.add_constraint(Ship(location, 'sub'))
+                        E.add_constraint(Ship(loc, 'sub'))
                 elif (len(verticalHits) == STYPES['sub']):
                     for loc in verticalHits:
-                        E.add_constraint(Ship(location, 'sub'))
+                        E.add_constraint(Ship(loc, 'sub'))
 
-                checked = checked + horizontalHits + verticalHits
+                checked += horizontalHits + verticalHits
 
 
 
