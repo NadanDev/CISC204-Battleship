@@ -55,23 +55,13 @@ class PossibleSegment(object):
 def example_theory():
 
     # ************HITS************
-    possibleShip = []
+    possibleShip=[]
     for i in range(len(boardSetup)):
         for j in range(len(boardSetup[i])):
             if (boardSetup[i][j] == 2):
                 E.add_constraint(Hit(LOCATIONS2D[i+1][j+1]))
-                possible_neighbors = [
-                    (i + 2, j + 1),  # Below
-                    (i + 1, j + 2),  # Right
-                    (i, j + 1),      # Above
-                    (i + 1, j)       # Left
-                ]
-                for ni, nj in possible_neighbors:
-                    if 0 <= ni < len(LOCATIONS2D) and 0 <= nj < len(LOCATIONS2D[ni]):
-                        neighbor_location = LOCATIONS2D[ni][nj]
-                        if boardSetup[ni - 1][nj - 1] == 0:  # Check
-                            possibleShip.append(Hit(neighbor_location))
-                constraint.add_exactly_one(E, possibleShip)
+                possibleShip = possibleShip + [PossibleSegment(LOCATIONS2D[i+2][j+1]), PossibleSegment(LOCATIONS2D[i+1][j+2]), PossibleSegment(LOCATIONS2D[i][j+1]), PossibleSegment(LOCATIONS2D[i+1][j])]
+    constraint.add_at_least_one(E, possibleShip)
 
     for i in range(len(boardSetup)): # No hit and miss in same spot
         for j in range(len(boardSetup[i])):
