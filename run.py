@@ -67,11 +67,22 @@ class Ship(object):
 def theory():
 
     # ************HITS************
+    possibleShip = []
     for i in range(len(boardSetup)):
         for j in range(len(boardSetup[i])):
             if (boardSetup[i][j] == 2):
                 E.add_constraint(Hit(LOCATIONS2D[i+1][j+1]))
-                possibleShip=[Hit(LOCATIONS2D[i+2][j+1]), Hit(LOCATIONS2D[i+1][j+2]), Hit(LOCATIONS2D[i][j+1]), Hit(LOCATIONS2D[i+1][j])]
+                possible_neighbors = [
+                    (i + 2, j + 1),  # S
+                    (i + 1, j + 2),  # E
+                    (i, j + 1),      # N
+                    (i + 1, j)       # W
+                ]
+                for ni, nj in possible_neighbors:
+                    if 0 <= ni < len(LOCATIONS2D) and 0 <= nj < len(LOCATIONS2D[ni]):
+                        neighbor_location = LOCATIONS2D[ni][nj]
+                        if boardSetup[ni - 1][nj - 1] == 0:  #Check the condition is not alrady hit or miss
+                            possibleShip.append(Hit(neighbor_location))
                 constraint.add_exactly_one(E, possibleShip)
 
     for i in range(len(boardSetup)): # No hit and miss in same spot
