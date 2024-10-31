@@ -8,7 +8,7 @@ HOW TO RUN:
 * Run "run.py"
 
 Currently the project does allow the user to change the board setup, but not in a user-friendly way. "boards.py" has a boardSetup array that can manipulated to set up any scenario. 
-"UI.py" currently only has a showSolutions function which has a showOnlyHits boolean and be changed to show boundary solutions (which are not that interesting).
+"UI.py" currently only has a showSolutions function which has a hideBoundaries boolean and be changed to show boundary solutions (which are not that interesting).
 
 ## Structure
 

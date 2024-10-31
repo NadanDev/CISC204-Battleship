@@ -56,10 +56,11 @@ def example_theory():
 
     # ************HITS************
     possibleShip=[]
-    for i in range(len(boardSetup)):
+    for i in range(len(boardSetup)): # Find hit locations and possible hit locations
         for j in range(len(boardSetup[i])):
             if (boardSetup[i][j] == 2):
                 E.add_constraint(Hit(LOCATIONS2D[i+1][j+1]))
+                E.add_constraint(~PossibleSegment(LOCATIONS2D[i+1][j+1]))
                 possibleShip = possibleShip + [PossibleSegment(LOCATIONS2D[i+2][j+1]), PossibleSegment(LOCATIONS2D[i+1][j+2]), PossibleSegment(LOCATIONS2D[i][j+1]), PossibleSegment(LOCATIONS2D[i+1][j])]
     constraint.add_at_least_one(E, possibleShip)
 
@@ -67,6 +68,7 @@ def example_theory():
         for j in range(len(boardSetup[i])):
             if (boardSetup[i][j] == 1):
                 E.add_constraint(~PossibleSegment(LOCATIONS2D[i+1][j+1]))
+                E.add_constraint(~Hit(LOCATIONS2D[i+1][j+1]))
                 
 
 
@@ -77,13 +79,10 @@ def example_theory():
                 E.add_constraint(Boundary(LOCATIONS2D[i][j]))
                 E.add_constraint(~(Boundary(LOCATIONS2D[i][j]) & PossibleSegment(LOCATIONS2D[i][j])))
 
-    
-    # Will only print the ship if it's shown in boardSetup with a row of 2's, but this currently breaks the first hit constraint.
-    findShipType()
 
-    # TODO: If # solutions is 1 then hit that spot. If # solutions > 1 then randomly choose one of them.
-    # TODO: Decide whether one solution is more plausible than the other (2 horizontally and not sunk -> 1 more horizontally)
-    # TODO: Sunk
+    
+    # Will only print the ship if it's shown in boardSetup with a row of 2's
+    findShipType()
 
     return E
 
