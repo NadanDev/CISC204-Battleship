@@ -4,7 +4,7 @@
 # Does not include boundaries
 # Board setup for the battleship game
 boardSetup = [
-    [1, 0, 0],
+    [1, 0, 2],
     [2, 0, 0],
     [1, 0, 0]
 ]
