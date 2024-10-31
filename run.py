@@ -5,6 +5,7 @@ from nnf import config
 config.sat_backend = "kissat"
 
 from boards import boardSetup, LOCATIONS, LOCATIONS2D
+from UI import showSolutions
 
 E = Encoding()
 
@@ -51,7 +52,7 @@ class PossibleSegment(object):
         return f"Possible segment @ ({self.location})"
         
 
-def theory():
+def example_theory():
 
     # ************HITS************
     possibleShip=[]
@@ -161,21 +162,12 @@ def findShipType():
 
 if __name__ == "__main__":
 
-    T = theory()
+    T = example_theory()
     T = T.compile()
 
     #print("\nSatisfiable: %s" % T.satisfiable())
 
-    showOnlyHits = True
-
     solutions = T.solve()
-    if (solutions):
-        print("\n# Solutions: %d" % count_solutions(T))
-        print("\n")
-        for k in solutions:
-            if solutions[k]:
-                if (showOnlyHits and str(k)[0] == "B"):
-                    continue
-                print(k, "\n")
-    else:
-        print("No solutions")
+    numSolutions = count_solutions(T)
+    showSolutions(solutions, numSolutions)
+
