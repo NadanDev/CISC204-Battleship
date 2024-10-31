@@ -56,11 +56,18 @@ def example_theory():
 
     # ************HITS************
     possibleShip=[]
+<<<<<<< HEAD
     for i in range(len(boardSetup)): # Find hit locations and possible hit locations
         for j in range(len(boardSetup[i])):
             if (boardSetup[i][j] == 2):
                 E.add_constraint(Hit(LOCATIONS2D[i+1][j+1]))
                 E.add_constraint(~PossibleSegment(LOCATIONS2D[i+1][j+1]))
+=======
+    for i in range(len(boardSetup)):
+        for j in range(len(boardSetup[i])):
+            if (boardSetup[i][j] == 2):
+                E.add_constraint(Hit(LOCATIONS2D[i+1][j+1]))
+>>>>>>> f73ad617d4580fff9e49e3a36f550a0c85fbed4c
                 possibleShip = possibleShip + [PossibleSegment(LOCATIONS2D[i+2][j+1]), PossibleSegment(LOCATIONS2D[i+1][j+2]), PossibleSegment(LOCATIONS2D[i][j+1]), PossibleSegment(LOCATIONS2D[i+1][j])]
     constraint.add_at_least_one(E, possibleShip)
 
