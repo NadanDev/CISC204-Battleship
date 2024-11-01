@@ -110,6 +110,8 @@ def findShipType():
                             incr += 1
                         else:
                             break
+                cont = True
+                incr=1
                 while cont:
                     cont = False
                     if (j - 1 > 0 and boardSetup[i - 1][j - 1 - incr] == 2):
@@ -119,9 +121,12 @@ def findShipType():
                             incr += 1
                         else:
                             break
-                    
+                
                 # Vertical
+                cont = True
+                incr=1
                 while cont:
+                    print("Hey")
                     cont = False
                     if (i + 1 < len(LOCATIONS2D) - 1 and boardSetup[i - 1 + incr][j - 1] == 2):
                         verticalHits.append(LOCATIONS2D[i + incr][j])
@@ -130,6 +135,8 @@ def findShipType():
                             incr += 1
                         else:
                             break
+                cont = True
+                incr=1
                 while cont:
                     cont = False
                     if (i - 1 > 0 and boardSetup[i - 1 - incr][j - 1] == 2):
