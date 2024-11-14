@@ -88,61 +88,38 @@ def example_theory():
 
 
 def findShipType():
-    checked=[]
+    checked=[] # Locations that have been checked
     for i in range(1, len(LOCATIONS2D) - 1):
         for j in range(1, len(LOCATIONS2D[i]) - 1):
             location = LOCATIONS2D[i][j]
             
             if (boardSetup[i - 1][j - 1] == 2 and location not in checked):
-                horizontalHits = [location]
-                verticalHits = [location]
-
-                cont = True
-                incr=1
+                horizontalHits = [location] # Hits that are part of a horizontal ship
+                verticalHits = [location] # Hits that are part of a vertical ship
 
                 # Horizontal
-                while cont:
-                    cont = False
-                    if (j + 1 < len(LOCATIONS2D[i]) - 1 and boardSetup[i - 1][j - 1 + incr] == 2):
-                        horizontalHits.append(LOCATIONS2D[i][j + incr])
-                        cont = True
-                        if (incr + 1 < 3):
-                            incr += 1
-                        else:
-                            break
                 cont = True
                 incr=1
                 while cont:
                     cont = False
-                    if (j - 1 > 0 and boardSetup[i - 1][j - 1 - incr] == 2):
-                        horizontalHits.append(LOCATIONS2D[i][j - incr])
+                    if (boardSetup[i - 1][j - 1 + incr] == 2): # Check if there is a hit to the right
+                        horizontalHits.append(LOCATIONS2D[i][j + incr])
                         cont = True
-                        if (incr + 1 < 3):
+                        if (j + incr < 3): # Check if we are at the end of the board
                             incr += 1
                         else:
                             break
                 
+
                 # Vertical
                 cont = True
                 incr=1
                 while cont:
-                    print("Hey")
                     cont = False
-                    if (i + 1 < len(LOCATIONS2D) - 1 and boardSetup[i - 1 + incr][j - 1] == 2):
+                    if (boardSetup[i - 1 + incr][j - 1] == 2): # Check if there is a hit below
                         verticalHits.append(LOCATIONS2D[i + incr][j])
                         cont = True
-                        if (incr + 1 < 3):
-                            incr += 1
-                        else:
-                            break
-                cont = True
-                incr=1
-                while cont:
-                    cont = False
-                    if (i - 1 > 0 and boardSetup[i - 1 - incr][j - 1] == 2):
-                        verticalHits.append(LOCATIONS2D[i - incr][j])
-                        cont = True
-                        if (incr + 1 < 3):
+                        if (i + incr < 3): # Check if we are at the end of the board
                             incr += 1
                         else:
                             break
