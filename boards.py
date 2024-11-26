@@ -4,9 +4,9 @@
 # Does not include boundaries
 # Board setup for the battleship game
 boardSetup = [
-    [1, 2, 0],
-    [2, 2, 0],
-    [1, 0, 0]
+    [1, 2, 1],
+    [1, 2, 1],
+    [1, 2, 1]
 ]
 
 LOCATIONS = [  # B spaces are boundaries, L spaces are playable
