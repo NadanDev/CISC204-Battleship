@@ -4,18 +4,24 @@ from bauhaus.utils import count_solutions, likelihood
 from nnf import config
 config.sat_backend = "kissat"
 
-from boards import boardSetup, LOCATIONS, LOCATIONS2D
-from UI import showSolutions
+from UI import showSolutions, getUserBoard
+
+
 
 E = Encoding()
 
+LOCATIONS = []
+LOCATIONS2D = []
+boardSetup = []
 
-STYPES = {'des': 3, 'sub': 2}
+STYPES = {'des': 3, 'sub': 2} # This model only supports destroyers and submarines, but any sized board should work fine
+
 STATUSCHECKED = ['Hit', 'Miss', 'Complete', 'Sunk']
 STATUSUNCHECKED = ["Unchecked", "Possible Segment", "Highly Possible Segment"]
 
 
-@proposition(E)
+
+@proposition(E) # Uncertain tile status
 class Unchecked(object):
     def __init__(self, location, status) -> None:
         assert location in LOCATIONS
@@ -26,7 +32,7 @@ class Unchecked(object):
     def _prop_name(self):
         return f"{self.status} @ ({self.location})"
     
-@proposition(E)
+@proposition(E) # Certain tile status
 class Checked(object):
     def __init__(self, location, status) -> None:
         assert location in LOCATIONS
@@ -37,7 +43,7 @@ class Checked(object):
     def _prop_name(self):
         return f"{self.status} @ ({self.location})"
 
-@proposition(E)
+@proposition(E) # Edge of the board
 class Boundary(object):
     def __init__(self, location) -> None:
         assert location in LOCATIONS
@@ -46,7 +52,7 @@ class Boundary(object):
     def _prop_name(self):
         return f"Boundary({self.location})"
 
-@proposition(E)
+@proposition(E) # Used to identify a sunk ship to a certain type
 class Ship(object):
     def __init__(self, location, stype) -> None:
         assert location in LOCATIONS
@@ -58,9 +64,10 @@ class Ship(object):
         return f"Ship @ ({self.location}={self.stype})"
     
 
-def example_theory():
+def theory():
 
     # ************BEGGINING BOARD************
+    # Look at the given board and add constraints according to space status
 
     # Hits
     for i in range(len(boardSetup)):
@@ -89,34 +96,52 @@ def example_theory():
         for j in range(len(LOCATIONS2D[i])):
             location = LOCATIONS2D[i][j]
 
+            # Misc constraints
             E.add_constraint(Checked(location, 'Hit') >> ~Checked(location, 'Miss'))
             E.add_constraint(Checked(location, 'Hit') >> ~Unchecked(location, 'Possible Segment'))
             E.add_constraint(Checked(location, 'Hit') >> ~Unchecked(location, 'Highly Possible Segment'))
             E.add_constraint(Checked(location, 'Miss') >> ~Unchecked(location, 'Possible Segment'))
             E.add_constraint(Checked(location, 'Miss') >> ~Unchecked(location, 'Highly Possible Segment'))
 
+            # A boundary or unchecked spot can't have any checked status and a boundary can't have an unchecked status
             for status in STATUSCHECKED:
                 E.add_constraint(Boundary(location) >> ~Checked(location, status))
                 E.add_constraint(Unchecked(location, 'Unchecked') >> ~Checked(location, status))
             for status in STATUSUNCHECKED:
                 E.add_constraint(Boundary(location) >> ~Unchecked(location, status))
 
+
     # Checking for possible segments and highly possible segments
+    findPossibleSegments()
+
+    # Find if a ship is sunk (surronded by misses/boundaries/hits)
+    findSunkShips()
+
+    # Will only print the ship if it's shown in boardSetup with a row of 2's
+    findShipType()
+
+    return E
+
+
+
+
+def findPossibleSegments():
     for i in range(1, len(LOCATIONS2D) - 1):
         for j in range(1, len(LOCATIONS2D[i]) - 1):
+
             location = LOCATIONS2D[i][j]
             right = LOCATIONS2D[i][j + 1]
             left = LOCATIONS2D[i][j - 1]
             up = LOCATIONS2D[i - 1][j]
             down = LOCATIONS2D[i + 1][j]
 
-            # Possible Segment
+            # Possible Segment (A a spot with a hit next to it)
             E.add_constraint(Unchecked(location, 'Possible Segment') >> (Checked(right, 'Hit') | Checked(left, 'Hit') | Checked(up, 'Hit') | Checked(down, 'Hit')))
 
             # Highly Possible Segment
-            if (i == len(LOCATIONS2D) - 2): # If's used to avoid out of bounds
+            if (i == len(LOCATIONS2D) - 2): # If's used to avoid out of bounds, each section checks whether the spot is on a specific edge (ex. you cant use right2 if you are on the right edge).
                 up2 = LOCATIONS2D[i - 2][j]
-                if (j == 1):
+                if (j == 1): # j = 1 is a left edge, j = len(LOCATIONS2D[i]) - 2 is a right edge, i = 1 is a top edge, i = len(LOCATIONS2D) - 2 is a bottom edge
                     right2 = LOCATIONS2D[i][j + 2]
                     E.add_constraint(Unchecked(location, 'Highly Possible Segment') >> ((Checked(up, 'Hit') & Checked(up2, 'Hit')) | (Checked(right, 'Hit') & Checked(right2, 'Hit'))))
                 elif (j == len(LOCATIONS2D[i]) - 2):
@@ -150,7 +175,7 @@ def example_theory():
                     left2 = LOCATIONS2D[i][j - 2]
                     down2 = LOCATIONS2D[i + 2][j]
                     E.add_constraint(Unchecked(location, 'Highly Possible Segment') >> ((Checked(down, 'Hit') & Checked(down2, 'Hit')) | (Checked(right, 'Hit') & Checked(right2, 'Hit')) | (Checked(left, 'Hit') & Checked(left2, 'Hit'))))
-            if (i != 1 and i != len(LOCATIONS2D) - 2 and j != 1 and j != len(LOCATIONS2D[i]) - 2):
+            if (i != 1 and i != len(LOCATIONS2D) - 2 and j != 1 and j != len(LOCATIONS2D[i]) - 2): # Not on an edge
                 right2 = LOCATIONS2D[i][j + 2]
                 left2 = LOCATIONS2D[i][j - 2]
                 up2 = LOCATIONS2D[i - 2][j]
@@ -158,27 +183,31 @@ def example_theory():
                 E.add_constraint(Unchecked(location, 'Highly Possible Segment') >> ((Checked(up, 'Hit') & Checked(up2, 'Hit')) | (Checked(down, 'Hit') & Checked(down2, 'Hit')) | (Checked(right, 'Hit') & Checked(right2, 'Hit')) | (Checked(left, 'Hit') & Checked(left2, 'Hit'))))
 
 
-    # Find if a ship is sunk (surronded by misses/boundaries/hits)
+
+
+def findSunkShips():
     for i in range(1, len(LOCATIONS2D) - 1):
         for j in range(1, len(LOCATIONS2D[i]) - 1):
+
             location = LOCATIONS2D[i][j]
             right = LOCATIONS2D[i][j + 1]
             left = LOCATIONS2D[i][j - 1]
             up = LOCATIONS2D[i - 1][j]
             down = LOCATIONS2D[i + 1][j]
 
-            # Readability
-            rightSpot = [Checked(right, 'Miss') | Checked(right, 'Hit') | Boundary(right)]
-            leftSpot = [Checked(left, 'Miss') | Checked(left, 'Hit') | Boundary(left)]
-            upSpot = [Checked(up, 'Miss') | Checked(up, 'Hit') | Boundary(up)]
-            downSpot = [Checked(down, 'Miss') | Checked(down, 'Hit') | Boundary(down)]
+            # Readability (So that there isn't one long line)
+            rightSpot = [Checked(right, 'Miss'), Checked(right, 'Hit'), Boundary(right)]
+            leftSpot = [Checked(left, 'Miss'),  Checked(left, 'Hit'),  Boundary(left)]
+            upSpot = [Checked(up, 'Miss'),  Checked(up, 'Hit'),  Boundary(up)]
+            downSpot = [Checked(down, 'Miss'),  Checked(down, 'Hit'),  Boundary(down)]
 
             E.add_constraint(Checked(location, 'Complete') >> ((Or(rightSpot)) & (Or(leftSpot)) & (Or(downSpot)) & (Or(upSpot)) & Checked(location, 'Hit'))) # Complete meaning not sunk but surrounded by checked spots
 
 
             if (i == len(LOCATIONS2D) - 2 and j == len(LOCATIONS2D[i]) - 2):
-                E.add_constraint(Checked(location, 'Sunk') >> (Checked(location, 'Complete') & (Checked(left, 'Sunk') | Checked(up, 'Sunk'))))
+                E.add_constraint(Checked(location, 'Sunk') >> (Checked(location, 'Complete') & (Checked(left, 'Sunk') | Checked(up, 'Sunk')))) # Used to simplify the code, with this we don't have to have more blocks like below (we can just check from left to right and top to bottom)
             elif (i == len(LOCATIONS2D) - 2):
+                # This is the main reason why we chose to use only ships of length 2 and 3, each longer ship would make the blocks below larger because of checking 3 or more spots away from the location. Any better way to program this?
                 right2 = LOCATIONS2D[i][j + 2]
                 E.add_constraint(Checked(location, 'Sunk') >> (Checked(location, 'Complete') & (
                                                               (Checked(right, 'Complete')    & (Checked(right2, 'Miss') | Checked(right2, "Complete") | Boundary(right2))) | 
@@ -196,16 +225,15 @@ def example_theory():
                                                               (Checked(down, 'Complete')    & (Checked(down2, 'Miss') | Checked(down2, "Complete") | Boundary(down2))) | 
                                                                Checked(left, 'Sunk') | Checked(up, 'Sunk'))))
 
-    # Will only print the ship if it's shown in boardSetup with a row of 2's
-    findShipType()
 
-    return E
+
 
 # TODO: Change to logic instead of normal python
 def findShipType():
     checked=[] # Locations that have been checked
     for i in range(1, len(LOCATIONS2D) - 1):
         for j in range(1, len(LOCATIONS2D[i]) - 1):
+
             location = LOCATIONS2D[i][j]
             
             if (boardSetup[i - 1][j - 1] == 2 and location not in checked):
@@ -262,10 +290,12 @@ def findShipType():
 
 if __name__ == "__main__":
 
-    T = example_theory()
+    LOCATIONS, LOCATIONS2D, boardSetup = getUserBoard()
+
+    T = theory()
     T = T.compile()
 
     solutions = T.solve()
+
     numSolutions = count_solutions(T)
     showSolutions(solutions, numSolutions)
-
