@@ -4,9 +4,7 @@ from bauhaus.utils import count_solutions, likelihood
 from nnf import config
 config.sat_backend = "kissat"
 
-from UI import showSolutions, getUserBoard
-
-
+from UI import showSolutions, getUserBoard, solveBoard
 
 E = Encoding()
 
@@ -63,8 +61,13 @@ class Ship(object):
     def _prop_name(self):
         return f"Ship @ ({self.location}={self.stype})"
     
-
 def theory():
+
+    # Reset constraints for next round
+    E._custom_constraints = set()
+    E.clear_constraints()
+    E.clear_debug_constraints()
+
 
     # ************BEGGINING BOARD************
     # Look at the given board and add constraints according to space status
@@ -227,7 +230,7 @@ def findSunkShips():
 
 
 
-
+# TODO: Make it more accurate
 # TODO: Change to logic instead of normal python
 def findShipType():
     checked=[] # Locations that have been checked
@@ -290,12 +293,39 @@ def findShipType():
 
 if __name__ == "__main__":
 
-    LOCATIONS, LOCATIONS2D, boardSetup = getUserBoard()
+    LOCATIONS, LOCATIONS2D, completeBoard, boardSetup, numSegments = getUserBoard()
 
-    T = theory()
-    T = T.compile()
+    print("Your complete board: \n")
+    for i in completeBoard:
+        print(i)
+    print()
 
-    solutions = T.solve()
+    print("Step 0:\n")
+    for i in boardSetup:
+        print(i)
+    print()
+
+    completed = False
+    singleStep = True
+    step = 1
+    while not completed:
+        
+        if (singleStep):
+            decision = input("Press enter to continue or type 'q' to jump to the end: \n")
+            if (decision == 'q'):
+                singleStep = False
+
+        print(f"Step {step}: \n")
+
+        T = theory()
+        T = T.compile()
+
+        solutions = T.solve()
+
+        boardSetup, completed = solveBoard(boardSetup, completeBoard, numSegments, solutions)
+
+        step += 1
+
 
     numSolutions = count_solutions(T)
-    showSolutions(solutions, numSolutions)
+    #showSolutions(solutions, numSolutions)
