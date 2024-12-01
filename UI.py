@@ -2,24 +2,26 @@ import random
 
 from CompleteBoards import boards3x3, boards4x4, boards5x5
 
-def showSolutions(solutions, numSolutions, hideBoundaries = True, hideUnchecked = True):
+def showSolutions(solutions, numSolutions, hideBoundaries = True, hideUnchecked = True): # Change hideBoundaries and hideUnchecked to show them but it just makes it look messy
 
     if (solutions):
         print("\n# Solutions: ", numSolutions)
-        toPrint = []
+
+        toPrint = [] # List of solutions to print (will be sorted)
         for k in solutions:
             if solutions[k]:
-                if (hideBoundaries and str(k)[0] == "B"):
+                if (hideBoundaries and str(k)[0] == "B"): # Hide boundaries
                     continue
-                elif (hideUnchecked and str(k)[0] == "U"):
+                elif (hideUnchecked and str(k)[0] == "U" and str(k)[2] == "c"): # Hide unchecked
                     continue
-                toPrint.append(str(k))
+                toPrint.append(str(k)) # Add everything else to the list
         
         toPrint.sort()
         for i in range(len(toPrint)):
-            if (toPrint[i][0] != toPrint[i-1][0] or toPrint[i][2] != toPrint[i-1][2]):
-                print("\n")
+            if (toPrint[i][0] != toPrint[i-1][0] or toPrint[i][2] != toPrint[i-1][2] or (toPrint[i][10] != toPrint[i-1][10] and toPrint[i][0] != "M" and toPrint[i][0] != "S")): # Add spaces between different types of solutions
+                print()
             print(toPrint[i])
+        print('\n')
 
     else:
         print("No solutions")
@@ -28,46 +30,69 @@ def showSolutions(solutions, numSolutions, hideBoundaries = True, hideUnchecked 
 
 
 def solveBoard(boardSetup, complete, numSegments, solutions):
+
+    # What will affect choices more
     possibleChoices = []
     highlyPossibleChoices = []
+    unlikelyChoices = []
+
     for k in solutions:
         if (solutions[k]):
-            if (str(k)[0] == "P"):
-                possibleChoices.append([int(str(k)[21]) - 1, int(str(k)[22]) - 1])
-            elif (str(k)[0] == "H" and str(k)[2] == "g"):
+            if (str(k)[0] == "P" and str(k)[10] != "u"): # If it's a possible segment
+                possibleChoices.append([int(str(k)[21]) - 1, int(str(k)[22]) - 1]) # Add the location
+            elif (str(k)[0] == "H" and str(k)[2] == "g"): # If it's a highly possible segment
                 highlyPossibleChoices.append([int(str(k)[28]) - 1, int(str(k)[29]) - 1])
+            elif (str(k)[0] == "U" and str(k)[2] == "l"): # If it's an unlikely segment
+                unlikelyChoices.append([int(str(k)[21]) - 1, int(str(k)[22]) - 1])
+
+    for i in range(len(unlikelyChoices)):
+        if (unlikelyChoices[i] in possibleChoices):
+            possibleChoices.remove(unlikelyChoices[i]) # Remove possible choices that are unlikely
         
-    if (len(highlyPossibleChoices) > 0):
-        choice = random.randrange(0, len(highlyPossibleChoices))
-        if (complete[highlyPossibleChoices[choice][0]][highlyPossibleChoices[choice][1]] == 2):
-            print(f"Almost certain hit at: L{highlyPossibleChoices[choice][0]}{highlyPossibleChoices[choice][1]}, and it hit!\n")
+    if (len(highlyPossibleChoices) > 0): # Always choose highly possible choices first
+        choice = random.randrange(0, len(highlyPossibleChoices)) # Choose a random highly possible choice
+        if (complete[highlyPossibleChoices[choice][0]][highlyPossibleChoices[choice][1]] == 2): # Check the starting board and see if the choice is correct
+            print(f"Almost certain hit at: L{highlyPossibleChoices[choice][0] + 1}{highlyPossibleChoices[choice][1] + 1}, and it hit!\n")
             boardSetup[highlyPossibleChoices[choice][0]][highlyPossibleChoices[choice][1]] = 2
         else:
-            print(f"Almost certain hit at: L{highlyPossibleChoices[choice][0]}{highlyPossibleChoices[choice][1]}, and it missed!\n")
+            print(f"Almost certain hit at: L{highlyPossibleChoices[choice][0] + 1}{highlyPossibleChoices[choice][1] + 1}, and it missed!\n")
             boardSetup[highlyPossibleChoices[choice][0]][highlyPossibleChoices[choice][1]] = 1
-    elif (len(possibleChoices) > 0):
+    elif (len(possibleChoices) > 0): # Choose possible choices if there are no highly possible choices
         choice = random.randrange(0, len(possibleChoices))
         if (complete[possibleChoices[choice][0]][possibleChoices[choice][1]] == 2):
-            print(f"Some chance hit at: L{possibleChoices[choice][0]}{possibleChoices[choice][1]}, and it hit!\n")
+            print(f"Some chance hit at: L{possibleChoices[choice][0] + 1}{possibleChoices[choice][1] + 1}, and it hit!\n")
             boardSetup[possibleChoices[choice][0]][possibleChoices[choice][1]] = 2
         else:
-            print(f"Some chance hit at: L{possibleChoices[choice][0]}{possibleChoices[choice][1]}, and it missed!\n")
+            print(f"Some chance hit at: L{possibleChoices[choice][0] + 1}{possibleChoices[choice][1] + 1}, and it missed!\n")
             boardSetup[possibleChoices[choice][0]][possibleChoices[choice][1]] = 1
-    else:
+    else: # If there are no possible choices, choose a random spot on the board
         spotsLeft = []
+        onlyUnlikely = True # If there are only unlikely choices left
+
         for i in range(len(boardSetup)):
             for j in range(len(boardSetup[i])):
                 if (boardSetup[i][j] == 0):
                     spotsLeft.append([i, j])
-            
+        
+        for i in range(len(spotsLeft)):
+            if (spotsLeft[i] not in unlikelyChoices): # Check if there are any spots left that aren't unlikely
+                onlyUnlikely = False
+                break
+
+        if (not onlyUnlikely):
+            for i in range(len(unlikelyChoices)):
+                if (unlikelyChoices[i] in spotsLeft):
+                    spotsLeft.remove(unlikelyChoices[i]) # Remove unlikely choices from spots left
+        
         choice = random.randrange(0, len(spotsLeft))
-        if (complete[spotsLeft[choice][0]][spotsLeft[choice][1]] == 2):
-            print(f"Random guess at: L{spotsLeft[choice][0]}{spotsLeft[choice][1]}, and it hit!\n")
+        if (complete[spotsLeft[choice][0]][spotsLeft[choice][1]] == 2): # Check if the random shot is correct
+            print(f"Random guess at: L{spotsLeft[choice][0] + 1}{spotsLeft[choice][1] + 1}, and it hit!\n")
             boardSetup[spotsLeft[choice][0]][spotsLeft[choice][1]] = 2
         else:
-            print(f"Random guess at: L{spotsLeft[choice][0]}{spotsLeft[choice][1]}, and it missed!\n")
+            print(f"Random guess at: L{spotsLeft[choice][0] + 1}{spotsLeft[choice][1] + 1}, and it missed!\n")
             boardSetup[spotsLeft[choice][0]][spotsLeft[choice][1]] = 1
 
+    # Compare hits on the board to the complete board
     count = 0
     for i in range(len(complete)):
         for j in range(len(complete[i])):
@@ -78,27 +103,27 @@ def solveBoard(boardSetup, complete, numSegments, solutions):
         print(i)
     print("\n")
 
-    if (count == numSegments):
+    if (count == numSegments): # If the counts for both boards are the same then the board is solved
 
         print("Board Solved!\n")
 
         return boardSetup, True
     
-    return boardSetup, False
+    return boardSetup, False # Not solved
 
 
 
-
+# Ask the user for a board setup
 def getUserBoard():
 
     numSegments = 0
 
-    userChoice = input("Would you like to make your own completed board? (y/n): ")
+    userChoice = input("Would you like to make your own completed board? (y/n): ") # Premade or no
 
     if (userChoice == 'y'):
-        userBoardStr = input("Enter your board, rows seperated by commas and spaces seperated by spaces (ex. 1 2 1, 0 2 1, 0 0 0): ")
+        userBoardStr = input("Enter your board, rows seperated by commas and spaces seperated by spaces (ex. 0 2 0, 0 2 0, 0 0 0): ") # Ask user for board
 
-        if (str(len(userBoardStr)) not in ['19', '34', '53']):
+        if (str(len(userBoardStr)) not in ['19', '34', '53']): # If it's not a 3x3, 4x4, or 5x5 board
             print("Invalid board setup (length)")
             exit()
 
@@ -107,32 +132,35 @@ def getUserBoard():
         userBoard = []
         row = []
         for char in userBoardStr:
-            if (char not in ['0', '1', '2', ' ', ',']):
+            if (char not in ['0', '2', ' ', ',']): # Only characters that should be entered
                 print("Invalid board setup (characters)")
                 exit()
 
-            if (char != ' '):
-                if (char == ',' and counter != 0):
+            if (char != ' '): # Skip spaces
+                if (char == ',' and counter != 0): # If we've reached the end of one row
                     if (boardSize == 0):
-                        boardSize = counter
+                        boardSize = counter # Set the board size
+                    
+                    # Add the row to the board and reset the row
                     userBoard.append(row)
                     row = []
                 else:
                     row.append(int(char))
                     counter += 1
-        userBoard.append(row)
+        userBoard.append(row) # Add the last row
+
         for i in range(len(userBoard)):
             for j in range(len(userBoard[i])):
                 if (userBoard[i][j] == 2):
-                    numSegments += 1
-    elif (userChoice == 'n'):
-        boardSize = int(input("Enter the size of the pre-made board (3, 4, 5): "))
+                    numSegments += 1 # Count the number of segments
+    elif (userChoice == 'n'): # Premade board
+        boardSize = int(input("Enter the size of the pre-made board (3, 4, 5): ")) # Choose a size
 
         if (boardSize not in [3, 4, 5]):
             print("Invalid board size")
             exit()
 
-        randomBoard = random.randrange(0, 10)
+        randomBoard = random.randrange(0, 10) # 10 of each size of board
         if (boardSize == 3):
             userBoard = boards3x3[randomBoard]
         elif (boardSize == 4):
@@ -143,12 +171,12 @@ def getUserBoard():
         for i in range(len(userBoard)):
             for j in range(len(userBoard[i])):
                 if (userBoard[i][j] == 2):
-                    numSegments += 1
+                    numSegments += 1 # Count the number of segments
     else:
         print("Invalid choice")
         exit()
 
-    if (boardSize == 3):
+    if (boardSize == 3): # Depending on the board size, grab the correct board setup
         # 0 - Not Checked
         # 1 - Miss
         # 2 - Hit

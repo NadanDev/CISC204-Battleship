@@ -1,14 +1,13 @@
-# CISC/CMPE 204 Modelling Project : BATTLESHIP
+# CISC/CMPE 204 Modelling Project Group 1 : BATTLESHIP
 
-Our project (currently) will solve a single scenario of a battleship board. Given hits, misses, and empty spaces on a board, the computer will determine where possible ships are
-located and what type each ship is.
+Our project will solve a game of battleship given a user-created board or a pre-made board. The model will run until every ship segment on the board is hit.
 
 HOW TO RUN: 
 * Run "Dockerfile" to avoid any errors.
 * Run "run.py"
 
-Currently the project does allow the user to change the board setup, but not in a user-friendly way. "boards.py" has a boardSetup array that can manipulated to set up any scenario. 
-"UI.py" currently only has a showSolutions function which has a hideBoundaries boolean and be changed to show boundary solutions (which are not that interesting).
+Options outside of running the program are changing the hideBoundaries and hideUnchecked arguments in the showSolutions function in UI.py (though these don't reveal anything helpful). All pre-made boards
+are stored in CompleteBoards.py and can easily be added to, but custom boards are more easily created from running the program itself.
 
 ## Structure
 
