@@ -3,8 +3,9 @@
 Our project will solve a game of battleship given a user-created board or a pre-made board. The model will run until every ship segment on the board is hit.
 
 HOW TO RUN: 
-* Run "Dockerfile" to avoid any errors.
-* Run "run.py"
+* Build image with "docker build -t battleship ."
+* Run in container using "docker run -it -v $(pwd):/PROJECT battleship /bin/bash"
+* Run "python run.py"
 
 Options outside of running the program are changing the hideBoundaries and hideUnchecked arguments in the showSolutions function in UI.py (though these don't reveal anything helpful). All pre-made boards
 are stored in CompleteBoards.py and can easily be added to, but custom boards are more easily created from running the program itself.
